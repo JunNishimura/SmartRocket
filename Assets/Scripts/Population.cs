@@ -5,11 +5,13 @@ using UnityEngine;
 public class Population
 {
     public static int GENMAX = 100;  // 世代数
-    public static float MUTATEPROB = 0.1f; // 突然変異率
-    public static int ELITE = 5; // デフォルトのエリート数
+    public static float MUTATEPROB = 0.2f; // 突然変異率
     public Rocket[] curIndividuals;
     private Rocket[] nextIndividuals;
     private float[] trFit;
+    private int elite = 0; 
+    private int superElite = 0; // elite which reaches the target 100%
+
     public Population(GameObject prefab)
     {
         curIndividuals  = new Rocket[Simulation.ROCKET_NUM];
@@ -29,9 +31,18 @@ public class Population
         quickSort(0, Simulation.ROCKET_NUM-1); 
 
         Debug.Log($"第{Simulation.curGeneration-1}世代 最良適応度: {this.curIndividuals[0].fitness}");
+
+        // 前世代にTargetに到達した数を現世代のエリート数とする
+        elite = 2;
+        superElite = 0;
+        for (int i = 0; i < Simulation.ROCKET_NUM; i++) 
+        {
+            if (curIndividuals[i].isReachedTarget) superElite++;
+        }
+        elite = Mathf.Max(elite+superElite, 5); // elite上限5
         
         // エリートは無条件に保存する
-        for (int i = 0; i < Population.ELITE; i++)
+        for (int i = 0; i < elite; i++)
         {
             for (int j = 0; j < Rocket.LIFESPAN; j++)
             {
@@ -44,21 +55,33 @@ public class Population
         float worstFitness = curIndividuals[Simulation.ROCKET_NUM-1].fitness;
         for (int i = 0; i < Simulation.ROCKET_NUM; i++) 
         {
-            trFit[i] = (worstFitness - curIndividuals[i].fitness + 0.0000001f) / worstFitness;
+            trFit[i] = (worstFitness - curIndividuals[i].fitness + 0.001f) / worstFitness;
             trFit[i] = Mathf.Pow(trFit[i], 4.0f);
             totalFitness += trFit[i];
         }
 
-        // 親を選択して交叉する
-        for (int i = ELITE; i < Simulation.ROCKET_NUM; i++) 
+        // 交叉
+        for (int i = elite; i < Simulation.ROCKET_NUM; i++) 
         {
-            int p1 = rouletteSelection(totalFitness);
-            int p2 = rouletteSelection(totalFitness);
-            nextIndividuals[i].Crossover(curIndividuals[p1], curIndividuals[p2]);
+            int parent = rouletteSelection(totalFitness);
+            int r = Random.Range(0, 3);
+            if (r == 0) 
+            {
+                nextIndividuals[i].Crossover(curIndividuals[i], curIndividuals[parent]);
+            }
+            else if (r == 1)
+            {
+                nextIndividuals[i].Crossover(curIndividuals[parent], curIndividuals[i]);
+            }
+            else 
+            {
+                int anotherParent = rouletteSelection(totalFitness);
+                nextIndividuals[i].Crossover(curIndividuals[parent], curIndividuals[anotherParent]);
+            }
         }
 
         // 突然変異
-        for (int i = ELITE; i < Simulation.ROCKET_NUM; i++) 
+        for (int i = superElite; i < Simulation.ROCKET_NUM; i++) 
         {
             nextIndividuals[i].Mutate();
         }
@@ -113,7 +136,7 @@ public class Population
     {
         if (lb < ub) 
         {
-            float pivot = this.curIndividuals[(int)((lb + ub)/2)].fitness;
+            float pivot = curIndividuals[(int)((lb + ub)/2)].fitness;
             int i = lb;
             int j = ub;
             while (i <= j) 
