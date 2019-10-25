@@ -78,7 +78,7 @@ public class Rocket : MonoBehaviour
     {
         // The closer the rocket to the target is, the lower the fitness is
         // In this case, the lower the fitness is, the better dna the rocket has
-        fitness = Vector2.Distance(transform.position, Simulation.targetPos) * penalty;
+        fitness = Vector2.Distance(transform.position, Simulation.target.transform.position) * penalty;
 
         // targetに到達した時点で残っているライフは適応度にそのまま使える
         // 早ければ早いほど良い。fitnessは小さいほど良いので、残りライフでfitnessを割る(ただし0でないことに注意してね)
