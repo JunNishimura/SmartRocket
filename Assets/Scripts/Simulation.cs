@@ -48,7 +48,7 @@ public class Simulation : MonoBehaviour
 
     private void Evolution()
     {
-        Debug.Log($"第{++ curGeneration}世代");
+        ++curGeneration;
         if (curGeneration == Population.GENMAX) return; // finish evolution
        
         if (curGeneration == 1) // if this is the first time to execute, then create new population
@@ -59,6 +59,5 @@ public class Simulation : MonoBehaviour
         {
             population.alternate();
         }
-
     }
 }

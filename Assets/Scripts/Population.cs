@@ -9,10 +9,12 @@ public class Population
     public static int ELITE = 5; // デフォルトのエリート数
     public Rocket[] curIndividuals;
     private Rocket[] nextIndividuals;
+    private float[] trFit;
     public Population(GameObject prefab)
     {
         curIndividuals  = new Rocket[Simulation.ROCKET_NUM];
         nextIndividuals = new Rocket[Simulation.ROCKET_NUM];
+        trFit = new float[Simulation.ROCKET_NUM];
 
         for (int i = 0; i < Simulation.ROCKET_NUM; i++) 
         {
@@ -37,11 +39,21 @@ public class Population
             }
         }
 
+        float totalFitness = 0;
+        // ソート後、配列最後尾には最悪適応度が格納されている
+        float worstFitness = curIndividuals[Simulation.ROCKET_NUM-1].fitness;
+        for (int i = 0; i < Simulation.ROCKET_NUM; i++) 
+        {
+            trFit[i] = (worstFitness - curIndividuals[i].fitness + 0.0000001f) / worstFitness;
+            trFit[i] = Mathf.Pow(trFit[i], 4.0f);
+            totalFitness += trFit[i];
+        }
+
         // 親を選択して交叉する
         for (int i = ELITE; i < Simulation.ROCKET_NUM; i++) 
         {
-            int p1 = selection();
-            int p2 = selection();
+            int p1 = rouletteSelection(totalFitness);
+            int p2 = rouletteSelection(totalFitness);
             nextIndividuals[i].Crossover(curIndividuals[p1], curIndividuals[p2]);
         }
 
@@ -64,7 +76,21 @@ public class Population
         }
     }
 
-    // select one number based on the individual's fitness
+    // ルーレット選択
+    private int rouletteSelection(float totalFitness) 
+    {
+        float rand = Random.Range(0.0f, 1.0f);
+        int rank = 1;
+        for (; rank <= Simulation.ROCKET_NUM; rank++) 
+        {
+            float prob = trFit[rank-1] / totalFitness;
+            if (rand <= prob) break;
+            rand -= prob;
+        }
+        return rank-1;
+    }
+
+    // 確率に基づくランキング選択
     private int selection() 
     {
         int rn = Simulation.ROCKET_NUM;
