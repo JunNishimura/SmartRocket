@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class Rocket : MonoBehaviour
 {
-    public static int LIFESPAN = 180; // 寿命 (frame)
+    public static int LIFESPAN = 240; // 寿命 (frame)
     public Vector2[] chrom { get; private set; }
     public float fitness { get; private set; }
     public bool isStopRunning;
+    public bool isReachedTarget;
+
     private Rigidbody2D rb;
     private Vector2 acceleration;
     private Vector2 velocity;
@@ -26,10 +28,10 @@ public class Rocket : MonoBehaviour
         }
         rb = this.GetComponent<Rigidbody2D>();
         fitness = 0.0f;
-        isStopRunning = false;
+        isStopRunning   = false;
+        isReachedTarget = false;
         nowLife = 0;
-        speed = 0.2f;
-        // assign random 2d vector ranging from 0 to pi
+        speed = 0.1f;
         acceleration = chrom[0];
         velocity = acceleration;
     }
@@ -45,12 +47,6 @@ public class Rocket : MonoBehaviour
         // 寿命が来る、もしくはスクリーン上部から消えたら終了
         if (++nowLife == LIFESPAN || rb.position.y >= Simulation.Y_BORDER.y) 
         {
-            if (rb.position.x < Simulation.X_BORDER.x ||
-                rb.position.x > Simulation.X_BORDER.y ||
-                rb.position.y < Simulation.Y_BORDER.x)
-            {
-                penalty *= 50;
-            }
             StopRunning();
         }
     }
@@ -60,7 +56,11 @@ public class Rocket : MonoBehaviour
         if (other.gameObject.CompareTag("Obstacle"))
         {
             // impose penalty if the rocket hits obstacle
-            penalty *= 100;
+            penalty *= 3;
+        }
+        else if (other.gameObject.CompareTag("Target")) 
+        {
+            isReachedTarget = true;
         }
         StopRunning();
     }
@@ -79,12 +79,19 @@ public class Rocket : MonoBehaviour
         // The closer the rocket to the target is, the lower the fitness is
         // In this case, the lower the fitness is, the better dna the rocket has
         fitness = Vector2.Distance(transform.position, Simulation.targetPos) * penalty;
+
+        // targetに到達した時点で残っているライフは適応度にそのまま使える
+        // 早ければ早いほど良い。fitnessは小さいほど良いので、残りライフでfitnessを割る(ただし0でないことに注意してね)
+        if (isReachedTarget && LIFESPAN - nowLife > 0)  
+        {
+            fitness /= nowLife;
+        }
     }
 
-    // 交叉
+    // 2つの親となるオブジェクトを選択して交叉する
     public void Crossover(Rocket p1, Rocket p2)  
     {
-        UniformCrossover(p1, p2);
+        OnePointCrossover(p1, p2);
     }
 
     // 1点交叉
@@ -146,12 +153,12 @@ public class Rocket : MonoBehaviour
     // 突然変異
     public void Mutate() 
     {
-        for (int i = 0; i < LIFESPAN; i++) 
+        for (int i = 0; i < Simulation.ROCKET_NUM; i++) 
         {
             if (Random.Range(0.0f, 1.0f) < Population.MUTATEPROB) 
             {
-                chrom[i] = new Vector2(Mathf.Cos(Random.Range(0, Mathf.PI)), 
-                                       Mathf.Sin(Random.Range(0, Mathf.PI)));
+                chrom[i] = new Vector2(Mathf.Cos(Random.Range(-Mathf.PI/4, Mathf.PI+Mathf.PI/4)), 
+                                       Mathf.Sin(Random.Range(-Mathf.PI/4, Mathf.PI+Mathf.PI/4)));
             }
         }
     }
@@ -172,5 +179,6 @@ public class Rocket : MonoBehaviour
         acceleration = chrom[0];
         velocity = acceleration;
         isStopRunning = false;
+        isReachedTarget = false;
     }
 }
