@@ -62,7 +62,6 @@ public class Rocket : MonoBehaviour
             // impose penalty if the rocket hits obstacle
             penalty *= 100;
         }
-        
         StopRunning();
     }
 
@@ -85,7 +84,7 @@ public class Rocket : MonoBehaviour
     // 交叉
     public void Crossover(Rocket p1, Rocket p2)  
     {
-        OnePointCrossover(p1, p2);
+        UniformCrossover(p1, p2);
     }
 
     // 1点交叉
@@ -125,6 +124,22 @@ public class Rocket : MonoBehaviour
         for (int i = point2+1; i < Simulation.ROCKET_NUM; i++) 
         {
             this.chrom[i] = p1.chrom[i];
+        }
+    }
+
+    // 一様交叉
+    private void UniformCrossover(Rocket p1, Rocket p2) 
+    {
+        for (int i = 0; i < Simulation.ROCKET_NUM; i++) 
+        {
+            if (Random.Range(0, 2) == 0) 
+            {
+                this.chrom[i] = p1.chrom[i];
+            }
+            else
+            {
+                this.chrom[i] = p2.chrom[i];
+            }
         }
     }
 
