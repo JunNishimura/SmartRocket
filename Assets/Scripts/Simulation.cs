@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // TODO:
-// ターゲットと障害物をプレイヤーが自由に位置を変えられるようにする
+// 軌跡を表現する
 public class Simulation : MonoBehaviour
 {
     public static int curGeneration = 0;
@@ -12,7 +12,7 @@ public class Simulation : MonoBehaviour
     public static GameObject[] rockets;
 
     public static GameObject target;
-    public static Vector2 Y_BORDER;
+    public static int Y_BORDER;
     public GameObject prefab;
     private Population population;
     private Camera cam;
@@ -25,7 +25,7 @@ public class Simulation : MonoBehaviour
         rockets   = new GameObject[ROCKET_NUM];
         target    = GameObject.Find("target");
         startPos  = new Vector2(0f, -5f);
-        Y_BORDER = new Vector2(-6f, 6f);
+        Y_BORDER = 6;
         cam = Camera.main;
         isDragging = false;
         for (int i = 0; i < ROCKET_NUM; i++) 
@@ -54,7 +54,7 @@ public class Simulation : MonoBehaviour
         {
             isDragging = false;
             target.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
-            target.GetComponent<Renderer>().material.color = new Color(1f, 1f, 1f, 1.0f);
+            target.GetComponent<Renderer>().material.color = new Color(1f, 1f, 1f, 1f);
             target.transform.rotation = Quaternion.Euler(Vector3.zero);
         }
 
@@ -86,15 +86,20 @@ public class Simulation : MonoBehaviour
     private void Evolution()
     {
         ++curGeneration;
-        if (curGeneration == Population.GENMAX) return; // finish evolution
-       
-        if (curGeneration == 1) // if this is the first time to execute, then create new population
+        if (curGeneration <= Population.GENMAX) 
         {
-            population = new Population(prefab);
+            if (curGeneration == 1) // if this is the first time to execute, then create new population
+            {
+                population = new Population(prefab);
+            }
+            else // from the second generation, let's alternate generation
+            {
+                population.alternate();
+            }
         }
-        else // from the second generation, let's alternate generation
+        else 
         {
-            population.alternate();
+            Debug.Log($"最良適応度：{this.population.curIndividuals[0].fitness}");
         }
     }
 }

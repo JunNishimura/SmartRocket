@@ -4,13 +4,15 @@ using UnityEngine;
 
 public class Rocket : MonoBehaviour
 {
-    public static int LIFESPAN = 240; // 寿命 (frame)
+    public static int LIFESPAN = 120; // 寿命 (frame)
     public Vector2[] chrom { get; private set; }
     public float fitness { get; private set; }
+    public float prevFitness;
     public bool isStopRunning;
     public bool isReachedTarget;
 
     private Rigidbody2D rb;
+    private TrailRenderer trail;
     private Vector2 acceleration;
     private Vector2 velocity;
     private int nowLife;
@@ -19,6 +21,8 @@ public class Rocket : MonoBehaviour
 
     private void Awake() 
     {
+        rb = this.GetComponent<Rigidbody2D>();
+        trail = this.GetComponent<TrailRenderer>();
         chrom = new Vector2[LIFESPAN];
         for (int i = 0; i < LIFESPAN; i++) 
         {
@@ -26,26 +30,27 @@ public class Rocket : MonoBehaviour
             this.chrom[i] = new Vector2(Mathf.Cos(Random.Range(-Mathf.PI/4, Mathf.PI+Mathf.PI/4)), 
                                         Mathf.Sin(Random.Range(-Mathf.PI/4, Mathf.PI+Mathf.PI/4)));
         }
-        rb = this.GetComponent<Rigidbody2D>();
-        fitness = 0.0f;
         isStopRunning   = false;
         isReachedTarget = false;
         nowLife = 0;
-        speed = 0.1f;
+        speed = 0.3f;
+        fitness = 0.0f;
+        prevFitness = 1.0f;
         acceleration = chrom[0];
         velocity = acceleration;
     }
 
     private void FixedUpdate() 
     {
-        if (isStopRunning) return;
+        if (isStopRunning) 
+            return;
 
         acceleration = chrom[nowLife];
-        velocity += acceleration;
+        velocity    += acceleration;
         rb.MovePosition(rb.position + velocity * speed * Time.fixedDeltaTime);
 
         // 寿命が来る、もしくはスクリーン上部から消えたら終了
-        if (++nowLife == LIFESPAN || rb.position.y >= Simulation.Y_BORDER.y) 
+        if (++nowLife == LIFESPAN || rb.position.y >= Simulation.Y_BORDER) 
         {
             StopRunning();
         }
@@ -173,12 +178,21 @@ public class Rocket : MonoBehaviour
     public void Reset() 
     {
         transform.position = Simulation.startPos;
+        trail.Clear();
+        trail.startColor = new Color(trail.startColor.r, 
+                                    trail.startColor.g,
+                                    trail.startColor.b,
+                                    0.1f + prevFitness);
+        trail.endColor = new Color(trail.startColor.r, 
+                                    trail.startColor.g,
+                                    trail.startColor.b,
+                                    0.1f + prevFitness);
         rb.constraints = RigidbodyConstraints2D.None;
         nowLife = 0;
         penalty = 1;
         acceleration = chrom[0];
-        velocity = acceleration;
-        isStopRunning = false;
+        velocity     = acceleration;
+        isStopRunning   = false;
         isReachedTarget = false;
     }
 }

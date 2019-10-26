@@ -29,7 +29,6 @@ public class Population
     {
         // 適応度を昇順に並び替える
         quickSort(0, Simulation.ROCKET_NUM-1); 
-
         Debug.Log($"第{Simulation.curGeneration-1}世代 最良適応度: {this.curIndividuals[0].fitness}");
 
         // 前世代にTargetに到達した数を現世代のエリート数とする
@@ -51,8 +50,7 @@ public class Population
         }
 
         float totalFitness = 0;
-        // ソート後、配列最後尾には最悪適応度が格納されている
-        float worstFitness = curIndividuals[Simulation.ROCKET_NUM-1].fitness;
+        float worstFitness = curIndividuals[Simulation.ROCKET_NUM-1].fitness; // ソート後、配列最後尾に最悪適応度が格納されている
         for (int i = 0; i < Simulation.ROCKET_NUM; i++) 
         {
             trFit[i] = (worstFitness - curIndividuals[i].fitness + 0.001f) / worstFitness;
@@ -67,15 +65,18 @@ public class Population
             int r = Random.Range(0, 3);
             if (r == 0) 
             {
+                nextIndividuals[i].prevFitness = trFit[i] * trFit[parent];
                 nextIndividuals[i].Crossover(curIndividuals[i], curIndividuals[parent]);
             }
             else if (r == 1)
             {
+                nextIndividuals[i].prevFitness = trFit[i] * trFit[parent];
                 nextIndividuals[i].Crossover(curIndividuals[parent], curIndividuals[i]);
             }
             else 
             {
                 int anotherParent = rouletteSelection(totalFitness);
+                nextIndividuals[i].prevFitness = trFit[anotherParent] * trFit[parent];
                 nextIndividuals[i].Crossover(curIndividuals[parent], curIndividuals[anotherParent]);
             }
         }
@@ -114,7 +115,7 @@ public class Population
     }
 
     // 確率に基づくランキング選択
-    private int selection() 
+    private int rankingSelection() 
     {
         int rn = Simulation.ROCKET_NUM;
         int denom = rn * (rn + 1) / 2;
