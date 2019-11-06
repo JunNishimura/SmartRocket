@@ -1,8 +1,8 @@
 # SmartRocket with GA
 smart rocket with Genetic Algorithm simulation
 
-## Show case
-![](./Images/)
+## Movie
+[Youtube](https://youtu.be/mZ0FwMoI0Ew)
 
 ## Description
 This simulation tries to solve the better path to reach the target with gentic algorithm in 2D space
